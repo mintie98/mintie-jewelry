@@ -8,13 +8,13 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div>
-            <h3 className="text-xl font-bold mb-4">JEWELRY</h3>
+            <h3 className="text-xl font-bold mb-4">MINTIE JEWELRY</h3>
             <p className="text-gray-400 mb-4">
               Chuyên cung cấp các sản phẩm trang sức cao cấp, vàng bạc đá quý.
             </p>
             <div className="text-gray-400">
-              <p>Hotline: 028 3929 3388</p>
-              <p>Email: info@jewelry.com</p>
+              <p>Hotline: 000 0000 0000</p>
+              <p>Email: info@mintie-jewelry.com</p>
             </div>
           </div>
 
@@ -96,7 +96,7 @@ const Footer: React.FC = () => {
 
         {/* Bottom bar */}
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-          <p>&copy; {new Date().getFullYear()} JEWELRY. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} MINTIE JEWELRY. All rights reserved.</p>
         </div>
       </div>
     </footer>

@@ -1,3 +1,19 @@
+-- Use the Jewelry database (optional, can be done manually before import)
+-- USE Jewelry;
+
+-- Drop tables in reverse order to handle foreign key dependencies
+DROP TABLE IF EXISTS reviews;
+DROP TABLE IF EXISTS cart_items;
+DROP TABLE IF EXISTS cart;
+DROP TABLE IF EXISTS order_items;
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS collection_products;
+DROP TABLE IF EXISTS collections;
+DROP TABLE IF EXISTS product_images;
+DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS users;
+
 -- Tạo bảng Users
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -42,8 +58,7 @@ CREATE TABLE products (
     is_featured BOOLEAN DEFAULT false,
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tạo bảng Product_Images
@@ -144,7 +159,9 @@ CREATE TABLE reviews (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tạo indexes để tối ưu hiệu suất truy vấn
+---
+### Indexes for Query Performance
+---
 CREATE INDEX idx_products_category ON products(category_id);
 CREATE INDEX idx_products_slug ON products(slug);
 CREATE INDEX idx_products_is_featured ON products(is_featured);
@@ -170,51 +187,78 @@ CREATE INDEX idx_reviews_product ON reviews(product_id);
 CREATE INDEX idx_reviews_user ON reviews(user_id);
 CREATE INDEX idx_reviews_rating ON reviews(rating);
 
--- Tạo triggers để tự động cập nhật updated_at
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ language 'plpgsql';
+---
+### Triggers for `updated_at` (Optional, as `ON UPDATE CURRENT_TIMESTAMP` handles this)
+---
+-- The previous errors were due to PostgreSQL function syntax.
+-- MySQL handles this directly within the trigger.
+-- However, for the `updated_at` column, you've already defined `ON UPDATE CURRENT_TIMESTAMP`
+-- in your table schemas, which means these triggers are redundant.
+-- If you still want to explicitly use triggers for this, here is the correct syntax:
 
+DELIMITER $$
+
+-- Trigger for users table
 CREATE TRIGGER update_users_updated_at
-    BEFORE UPDATE ON users
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+BEFORE UPDATE ON users
+FOR EACH ROW
+BEGIN
+    SET NEW.updated_at = CURRENT_TIMESTAMP;
+END$$
 
+-- Trigger for categories table
 CREATE TRIGGER update_categories_updated_at
-    BEFORE UPDATE ON categories
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+BEFORE UPDATE ON categories
+FOR EACH ROW
+BEGIN
+    SET NEW.updated_at = CURRENT_TIMESTAMP;
+END$$
 
+-- Trigger for products table
 CREATE TRIGGER update_products_updated_at
-    BEFORE UPDATE ON products
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+BEFORE UPDATE ON products
+FOR EACH ROW
+BEGIN
+    SET NEW.updated_at = CURRENT_TIMESTAMP;
+END$$
 
+-- Trigger for collections table
 CREATE TRIGGER update_collections_updated_at
-    BEFORE UPDATE ON collections
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+BEFORE UPDATE ON collections
+FOR EACH ROW
+BEGIN
+    SET NEW.updated_at = CURRENT_TIMESTAMP;
+END$$
 
+-- Trigger for orders table
 CREATE TRIGGER update_orders_updated_at
-    BEFORE UPDATE ON orders
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+BEFORE UPDATE ON orders
+FOR EACH ROW
+BEGIN
+    SET NEW.updated_at = CURRENT_TIMESTAMP;
+END$$
 
+-- Trigger for cart table
 CREATE TRIGGER update_cart_updated_at
-    BEFORE UPDATE ON cart
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+BEFORE UPDATE ON cart
+FOR EACH ROW
+BEGIN
+    SET NEW.updated_at = CURRENT_TIMESTAMP;
+END$$
 
-CREATE TRIGGER update_cart_items_updated_at
-    BEFORE UPDATE ON cart_items
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
+-- Trigger for cart_items table
+BEFORE UPDATE ON cart_items
+FOR EACH ROW
+BEGIN
+    SET NEW.updated_at = CURRENT_TIMESTAMP;
+END$$
 
+-- Trigger for reviews table
 CREATE TRIGGER update_reviews_updated_at
-    BEFORE UPDATE ON reviews
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column(); 
+BEFORE UPDATE ON reviews
+FOR EACH ROW
+BEGIN
+    SET NEW.updated_at = CURRENT_TIMESTAMP;
+END$$
+
+DELIMITER ;
