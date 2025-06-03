@@ -33,3 +33,72 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* ---------------------------------------------------------------------- */
+/* Swiper Custom Styles */
+/* ---------------------------------------------------------------------- */
+
+/* Remove generic Swiper button styles that might conflict */
+/*
+.swiper-button-next,
+.swiper-button-prev {
+  color: #9ca3af !important;
+  transform: scale(0.8);
+}
+*/
+
+/* Container for thumbnail Swiper to control arrow positioning */
+.swiper-thumbnail-container {
+  position: relative; /* Crucial for absolute positioning of Swiper arrows */
+  margin-top: 1rem; /* Added from component, good to keep here for consistency */
+}
+
+/* Styles for Swiper Navigation Arrows within the thumbnail container */
+.swiper-thumbnail-container .swiper-button-prev,
+.swiper-thumbnail-container .swiper-button-next {
+  color: #000000;
+  background-color: rgba(201, 197, 197, 0.9);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  --swiper-navigation-size: 18px;
+  z-index: 10;
+  top: 50%; /* Center vertically */
+  transform: translateY(-50%); /* Center vertically */
+  margin-top: 0; /* Reset default margin */
+}
+
+.swiper-thumbnail-container .swiper-button-prev {
+  left: 0px; /* Position at the very left edge of the container */
+  right: auto;
+}
+
+.swiper-thumbnail-container .swiper-button-next {
+  right: 0px; /* Position at the very right edge of the container */
+  left: auto;
+}
+
+/* Add padding to the Swiper instance itself to make space for arrows */
+.swiper-thumbnail-container .swiper {
+  padding: 0 28px; /* Give space for 24px arrows + a little margin */
+  /* Remove position: relative; here as it's already on .swiper-thumbnail-container */
+  /* Remove width: 100%; height: 100%; as Swiper handles this for slidesPerView */
+}
+
+/* Fix for swiper-slide width issue:
+   REMOVE `width: auto !important;` for `.swiper-slide`
+   Swiper calculates this automatically based on slidesPerView and spaceBetween.
+   If you have this, it overrides Swiper's internal calculations.
+*/
+/* .swiper-slide {
+  width: auto !important; // <<<--- REMOVE OR COMMENT THIS LINE
+} */
+
+/* Ensure disabled buttons are styled correctly */
+.swiper-button-disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}

@@ -31,45 +31,36 @@ CREATE TABLE users (
 -- Tạo bảng Categories
 CREATE TABLE categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    slug VARCHAR(100) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) NOT NULL UNIQUE,
     description TEXT,
-    parent_id INT,
-    image_url VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (parent_id) REFERENCES categories(id) ON DELETE SET NULL
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tạo bảng Products
 CREATE TABLE products (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(200) NOT NULL,
-    slug VARCHAR(200) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) NOT NULL UNIQUE,
     description TEXT,
-    price DECIMAL(12,2) NOT NULL,
-    sale_price DECIMAL(12,2),
-    sku VARCHAR(50) UNIQUE,
-    stock_quantity INT DEFAULT 0,
-    weight DECIMAL(8,2), -- trọng lượng (gram)
-    dimensions VARCHAR(50), -- kích thước
-    material VARCHAR(100), -- chất liệu
     category_id INT,
-    is_featured BOOLEAN DEFAULT false,
-    is_active BOOLEAN DEFAULT true,
+    is_featured BOOLEAN DEFAULT FALSE,
+    is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (category_id) REFERENCES categories(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tạo bảng Product_Images
 CREATE TABLE product_images (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    product_id INT NOT NULL,
+    variant_id INT,
     image_url VARCHAR(255) NOT NULL,
-    is_primary BOOLEAN DEFAULT false,
+    is_primary BOOLEAN DEFAULT FALSE,
     display_order INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+    FOREIGN KEY (variant_id) REFERENCES product_variants(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tạo bảng Collections
@@ -167,7 +158,7 @@ CREATE INDEX idx_products_slug ON products(slug);
 CREATE INDEX idx_products_is_featured ON products(is_featured);
 CREATE INDEX idx_products_is_active ON products(is_active);
 
-CREATE INDEX idx_product_images_product ON product_images(product_id);
+CREATE INDEX idx_product_images_product ON product_images(variant_id);
 CREATE INDEX idx_product_images_is_primary ON product_images(is_primary);
 
 CREATE INDEX idx_collection_products_collection ON collection_products(collection_id);
@@ -262,3 +253,37 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+-- Thêm dữ liệu mẫu cho bảng categories
+INSERT INTO categories (name, slug, description) VALUES
+('Nhẫn', 'rings', 'Các loại nhẫn'),
+('Dây chuyền', 'necklaces', 'Các loại dây chuyền'),
+('Bông tai', 'earrings', 'Các loại bông tai'),
+('Lắc tay', 'bracelets', 'Các loại lắc tay');
+
+-- Thêm dữ liệu mẫu cho bảng products
+INSERT INTO products (name, slug, description, category_id, is_featured, is_active) VALUES
+('Diamond Ring', 'diamond-ring', 'Elegant diamond ring with natural diamond', 1, 0, 1),
+('Gold Necklace', 'gold-necklace', 'Beautiful pure gold necklace', 2, 0, 1),
+('Pearl Earrings', 'pearl-earrings', 'Classic pearl earrings', 3, 0, 1),
+('Gold Bracelet', 'gold-bracelet', 'Stylish gold bracelet with gemstone accents', 4, 0, 1),
+('Wedding Ring', 'wedding-ring', 'Romantic diamond wedding ring set', 1, 0, 1),
+('Pearl Necklace', 'pearl-necklace', 'Luxurious natural pearl necklace', 2, 0, 1);
+
+-- Thêm dữ liệu mẫu cho bảng product_variants
+INSERT INTO product_variants (product_id, sku, price, sale_price, stock, is_active) VALUES
+(1, 'SKU1', 15000000.00, NULL, 0, 1),
+(2, 'SKU2', 8500000.00, NULL, 0, 1),
+(3, 'SKU3', 3200000.00, NULL, 0, 1),
+(4, 'SKU4', 12000000.00, NULL, 0, 1),
+(5, 'SKU5', 25000000.00, NULL, 0, 1),
+(6, 'SKU6', 5500000.00, NULL, 0, 1);
+
+-- Thêm dữ liệu mẫu cho bảng product_images
+INSERT INTO product_images (variant_id, image_url, is_primary, display_order) VALUES
+(1, '/uploads/diamond-ring.jpg', 1, 1),
+(2, '/uploads/gold-necklace.jpg', 1, 1),
+(3, '/uploads/pearl-earrings.jpg', 1, 1),
+(4, '/uploads/gold-bracelet.jpg', 1, 1),
+(5, '/uploads/wedding-ring.jpg', 1, 1),
+(6, '/uploads/pearl-necklace.jpg', 1, 1);
