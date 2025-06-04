@@ -1,6 +1,14 @@
-# Jewelry E-commerce Website
+# Mintie Jewelry
 
-A modern e-commerce platform for jewelry products, inspired by SJC's website.
+A modern e-commerce website for jewelry products built with React and Node.js.
+
+## Features
+
+- 🛍️ **Product Catalog**: Browse through a collection of jewelry products
+- 🔍 **Product Details**: View detailed information about each product including images, sizes, and prices
+- 🛒 **Shopping Cart**: Add products to cart, manage quantities, and view order summary
+- 📱 **Responsive Design**: Optimized for both desktop and mobile devices
+- 🎨 **Modern UI**: Clean and elegant design with smooth animations
 
 ## Tech Stack
 
@@ -9,56 +17,91 @@ A modern e-commerce platform for jewelry products, inspired by SJC's website.
 - TypeScript
 - Tailwind CSS
 - React Router
-- Redux Toolkit
+- React Query
+- Axios
 
 ### Backend
 - Node.js
-- Express.js
+- Express
 - MySQL
-- Sequelize ORM
+- MySQL2
 
 ## Project Structure
+
 ```
-jewelry/
-├── frontend/          # React frontend application
-├── backend/           # Node.js backend server
-└── database/          # Database migrations and seeds
+├── frontend/                # React frontend application
+│   ├── src/
+│   │   ├── components/     # Reusable UI components
+│   │   ├── features/       # Feature-specific components
+│   │   ├── hooks/         # Custom React hooks
+│   │   ├── pages/         # Page components
+│   │   ├── services/      # API services
+│   │   └── types/         # TypeScript type definitions
+│   └── public/            # Static files
+│
+├── backend/               # Node.js backend application
+│   ├── controllers/      # Route controllers
+│   ├── routes/          # API routes
+│   ├── uploads/         # Product images
+│   └── config.js        # Configuration
+│
+└── database/            # Database schema and migrations
 ```
 
 ## Getting Started
 
 ### Prerequisites
 - Node.js (v18 or higher)
-- MySQL (v8.0 or higher)
-- npm or yarn
+- MySQL (v8 or higher)
 
 ### Installation
 
-1. Clone the repository
-2. Install frontend dependencies:
-   ```bash
-   cd frontend
-   npm install
-   ```
+1. Clone the repository:
+```bash
+git clone https://github.com/mintie98/mintie-jewelry.git
+cd mintie-jewelry
+```
 
-3. Install backend dependencies:
-   ```bash
-   cd backend
-   npm install
-   ```
+2. Set up the database:
+```bash
+# Create a new MySQL database named 'Jewelry'
+# Import the schema from database/schema.sql
+```
 
-4. Set up the database:
-   - Create a MySQL database
-   - Update the database configuration in `backend/.env`
+3. Set up the backend:
+```bash
+cd backend
+npm install
+# Create a .env file with your database credentials
+npm start
+```
 
-5. Start the development servers:
-   - Frontend: `cd frontend && npm start`
-   - Backend: `cd backend && npm run dev`
+4. Set up the frontend:
+```bash
+cd frontend
+npm install
+npm start
+```
 
-## Features
-- Product catalog with categories
-- User authentication
-- Shopping cart
-- Order management
-- Admin dashboard
-- Responsive design 
+The application will be available at:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:5001
+
+## API Endpoints
+
+### Products
+- `GET /api/products` - Get all products
+- `GET /api/products/:id` - Get product details
+- `GET /api/products/related/:id` - Get related products
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License. 

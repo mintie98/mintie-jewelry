@@ -7,14 +7,25 @@ interface Product {
   id: number;
   name: string;
   slug: string;
-  price: number | string; 
-  sale_price: number | null; // Có thể có hoặc không
-  description: string | null;
-  image: string | null; // Đường dẫn ảnh chính từ backend
+  description: string;
+  category_id: number;
+  category_name: string;
+  category_slug: string;
   is_featured: boolean;
   is_active: boolean;
-  category_slug: string | null; // Thêm trường category_slug từ API
-  category_name: string | null; // Thêm trường category_name từ API (tùy chọn)
+  variants: {
+    id: number;
+    sku: string;
+    price: number;
+    sale_price: number | null;
+    is_active: boolean;
+    images: {
+      id: number;
+      image_url: string;
+      is_primary: boolean;
+      display_order: number;
+    }[];
+  }[];
 }
 
 const Products: React.FC = () => {
@@ -47,28 +58,22 @@ const Products: React.FC = () => {
 
   // Thêm logic lọc theo khoảng giá
   const productsAfterPriceFilter = filteredProducts.filter(product => {
-    // Parse giá từ string sang number một cách an toàn
-    const price = parseFloat(product.price as string);
-    if (isNaN(price)) { // Bỏ qua nếu không phải là số
-      return false;
-    }
+    const price = product.variants[0]?.price || 0;
     return price >= priceRange[0] && price <= priceRange[1];
   });
 
   // Thêm logic sắp xếp
   const sortedProducts = [...productsAfterPriceFilter].sort((a, b) => {
     if (sortOption === 'price-asc') {
-      const priceA = parseFloat(a.price as string);
-      const priceB = parseFloat(b.price as string);
-      return (isNaN(priceA) ? 0 : priceA) - (isNaN(priceB) ? 0 : priceB); // Sắp xếp giá tăng dần
+      const priceA = a.variants[0]?.price || 0;
+      const priceB = b.variants[0]?.price || 0;
+      return priceA - priceB;
     } else if (sortOption === 'price-desc') {
-      const priceA = parseFloat(a.price as string);
-      const priceB = parseFloat(b.price as string);
-      return (isNaN(priceB) ? 0 : priceB) - (isNaN(priceA) ? 0 : priceA); // Sắp xếp giá giảm dần
+      const priceA = a.variants[0]?.price || 0;
+      const priceB = b.variants[0]?.price || 0;
+      return priceB - priceA;
     } else {
-      // Mới nhất (có thể dựa vào ID hoặc created_at nếu có)
-      // Hiện tại dùng ID giảm dần làm mặc định (ID lớn hơn là mới hơn nếu thêm liên tục)
-      return b.id - a.id; // Sắp xếp ID giảm dần
+      return b.id - a.id;
     }
   });
 
@@ -150,14 +155,19 @@ const Products: React.FC = () => {
                 <div className="bg-white rounded-lg shadow-md overflow-hidden h-120">
                   <div className="relative pb-4 pt-4 px-4">
                     <img
-                      src={`http://localhost:5001${product.image}`} // product.image có thể null nếu sản phẩm không có ảnh chính
+                      src={`http://localhost:5001${
+                        product.variants[0]?.images.find(img => img.is_primary)?.image_url || 
+                        product.variants[0]?.images[0]?.image_url || ''
+                      }`}
                       alt={product.name}
                       className="w-full h-72 object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
                   <div className="p-4 h-48">
                     <h3 className="text-lg font-semibold mb-2">{product.name}</h3>
-                    <p className="text-gold-500 font-bold">{(parseFloat(product.price as string)).toLocaleString('vi-VN', { maximumFractionDigits: 0 })}đ</p>
+                    <p className="text-gold-500 font-bold">
+                      {product.variants[0]?.price.toLocaleString('vi-VN', { maximumFractionDigits: 0 })}đ
+                    </p>
                     <p className="text-gray-600 text-sm mt-2 line-clamp-3">{product.description}</p>
                   </div>
                 </div>
