@@ -21,7 +21,11 @@ interface ProductImage {
   image_url: string;
   is_primary: boolean;
   display_order: number;
-  is_active: boolean;
+}
+
+interface ProductQuantity {
+  size: string;
+  quantity: number;
 }
 
 interface ProductVariant {
@@ -30,9 +34,9 @@ interface ProductVariant {
   sku: string;
   price: number;
   sale_price: number | null;
-  stock: number;
   is_active: boolean;
   images: ProductImage[];
+  sizes_quantities: ProductQuantity[];
 }
 
 interface Product {
@@ -41,6 +45,8 @@ interface Product {
   slug: string;
   description: string;
   category_id: number;
+  category_name: string;
+  category_slug: string;
   is_featured: boolean;
   is_active: boolean;
   variants: ProductVariant[];
@@ -54,6 +60,8 @@ const ProductDetail: React.FC = () => {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [quantity, setQuantity] = useState<number>(1);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const swiperRef = useRef<SwiperType | null>(null);
 
@@ -97,26 +105,39 @@ const ProductDetail: React.FC = () => {
     fetchRelatedProducts();
   }, [id]);
 
-  useEffect(() => {
-    if (product && product.variants && product.variants.length > 0) {
-       const initialVariant = product.variants[0];
-       setSelectedVariant(initialVariant);
-       const primaryImage = initialVariant.images.find((img: ProductImage) => img.is_primary);
-       if (primaryImage) {
-         setSelectedImage(primaryImage.image_url);
-       } else if (initialVariant.images.length > 0) {
-          setSelectedImage(initialVariant.images[0].image_url);
-       } else {
-          setSelectedImage(null);
-       }
-    }
-  }, [product]);
-
   const handleImageClick = (image: ProductImage, index: number) => {
     setSelectedImage(image.image_url);
     setSelectedImageIndex(index);
     if (swiperRef.current) {
       swiperRef.current.slideTo(index);
+    }
+  };
+
+  const handleVariantChange = (variant: ProductVariant) => {
+    setSelectedVariant(variant);
+    setSelectedSize(null);
+    setQuantity(1);
+    const primaryImage = variant.images.find((img) => img.is_primary);
+    if (primaryImage) {
+      setSelectedImage(primaryImage.image_url);
+    } else if (variant.images.length > 0) {
+      setSelectedImage(variant.images[0].image_url);
+    } else {
+      setSelectedImage(null);
+    }
+  };
+
+  const handleSizeChange = (size: string) => {
+    setSelectedSize(size);
+    setQuantity(1);
+  };
+
+  const handleQuantityChange = (newQuantity: number) => {
+    if (newQuantity >= 1 && selectedSize) {
+      const sizeQuantity = selectedVariant?.sizes_quantities.find(q => q.size === selectedSize);
+      if (sizeQuantity && newQuantity <= sizeQuantity.quantity) {
+        setQuantity(newQuantity);
+      }
     }
   };
 
@@ -256,81 +277,87 @@ const ProductDetail: React.FC = () => {
             </div>
           )}
 
-          {/* Variants */}
-          {product.variants && product.variants.length > 1 && (
+          {/* Size Selection */}
+          {selectedVariant && selectedVariant.sizes_quantities && selectedVariant.sizes_quantities.length > 0 && (
             <div className="space-y-2">
-              <h3 className="text-lg font-semibold">Available Variants</h3>
-              <div className="grid grid-cols-2 gap-2">
-                {product.variants.map((variant) => (
-                  <button
-                    key={variant.id}
-                    onClick={() => {
-                      setSelectedVariant(variant);
-                      const primaryImage = variant.images.find((img) => img.is_primary);
-                      if (primaryImage) {
-                        setSelectedImage(primaryImage.image_url);
-                      } else if (variant.images.length > 0) {
-                         setSelectedImage(variant.images[0].image_url);
-                      } else {
-                         setSelectedImage(null);
-                      }
-                    }}
-                    className={`p-2 border rounded-lg ${ selectedVariant?.id === variant.id ? 'border-gold-500 bg-gold-50' : 'border-gray-200'}`}
-                  >
-                    <div className="text-sm font-medium">{variant.sku}</div>
-                    <div className="text-sm text-gray-500">
-                      {variant.price.toLocaleString('vi-VN')}đ
-                    </div>
-                  </button>
-                ))}
+              <h3 className="text-lg font-semibold">Select Size</h3>
+              <div className="flex flex-wrap gap-1">
+                {selectedVariant.sizes_quantities
+                  .sort((a, b) => parseFloat(a.size) - parseFloat(b.size))
+                  .map((q) => (
+                    <button
+                      key={q.size}
+                      onClick={() => handleSizeChange(q.size)}
+                      disabled={q.quantity === 0}
+                      className={`aspect-square w-10 h-10 flex items-center justify-center border rounded-lg text-sm font-medium ${
+                        selectedSize === q.size
+                          ? 'border-gold-500 bg-gold-50 text-gold-500'
+                          : q.quantity === 0
+                          ? 'border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'border-gray-200 hover:border-gold-500'
+                      }`}
+                    >
+                      {q.size}
+                    </button>
+                  ))}
               </div>
             </div>
           )}
 
-          {/* Quantity - Template Placeholder */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Số lượng
-            </label>
-            <div className="flex items-center">
-              <button
-                className="px-3 py-1 border rounded-l-md"
-              >
-                -
-              </button>
-              <input
-                type="number"
-                min="1"
-                value={1} // Placeholder value
-                readOnly // Make it read-only as it's a template
-                className="w-16 text-center border-t border-b"
-              />
-              <button
-                className="px-3 py-1 border rounded-r-md"
-              >
-                +
-              </button>
+          {/* Quantity */}
+          {selectedSize && (
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Quantity
+              </label>
+              <div className="flex items-center">
+                <button
+                  onClick={() => handleQuantityChange(quantity - 1)}
+                  className="px-3 py-1 border rounded-l-md hover:bg-gray-100"
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  min="1"
+                  value={quantity}
+                  onChange={(e) => handleQuantityChange(parseInt(e.target.value))}
+                  className="w-16 text-center border-t border-b"
+                />
+                <button
+                  onClick={() => handleQuantityChange(quantity + 1)}
+                  className="px-3 py-1 border rounded-r-md hover:bg-gray-100"
+                >
+                  +
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Add to Cart Button */}
-          <button className="w-full bg-gold-500 text-white py-3 px-6 rounded-lg hover:bg-gold-600 transition-colors">
-            Add to Cart
+          <button
+            disabled={!selectedSize}
+            className={`w-full py-3 px-6 rounded-lg transition-colors ${
+              selectedSize
+                ? 'bg-gold-500 text-white hover:bg-gold-600'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            {selectedSize ? 'Add to Cart' : 'Select a size'}
           </button>
 
-          {/* Product Details - Template Placeholder */}
+          {/* Product Details */}
           <div className="mt-8">
             <h2 className="text-xl font-semibold mb-4">Thông tin sản phẩm</h2>
             <div className="space-y-2">
               <div className="flex">
-                <span className="w-32 text-gray-600">Chất liệu:</span>
-                <span>Đang cập nhật</span> {/* Placeholder value */}
+                <span className="w-32 text-gray-600">Danh mục:</span>
+                <span>{product.category_name}</span>
               </div>
               <div className="flex">
-                <span className="w-32 text-gray-600">Kích thước:</span>
-                <span>Đang cập nhật</span> {/* Placeholder value */}
+                <span className="w-32 text-gray-600">Mã sản phẩm:</span>
+                <span>{selectedVariant?.sku}</span>
               </div>
-              {/* Add more placeholder detail rows as needed */}
             </div>
           </div>
 
@@ -364,7 +391,7 @@ const ProductDetail: React.FC = () => {
                     <h3 className="text-lg font-semibold mb-2">{relatedProduct.name}</h3>
                     <p className="text-gold-500 font-bold">
                       {relatedProduct.variants && relatedProduct.variants.length > 0
-                       ? `${relatedProduct.variants[0].price.toLocaleString('vi-VN')}đ`
+                       ? `${relatedProduct.variants[0].price.toLocaleString('vi-VN', { maximumFractionDigits: 0 })}đ`
                        : 'N/A'}
                     </p>
                   </div>

@@ -1,23 +1,22 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const config = require('./config');
 const productRoutes = require('./routes/productRoutes');
 
 const app = express();
+
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Phục vụ file tĩnh từ thư mục uploads
-app.use('/uploads', express.static('uploads'));
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// API routes
+// Routes
 app.use('/api/products', productRoutes);
 
-// Trang chủ test
-app.get('/', (req, res) => {
-  res.send('Mintie Jewelry Backend API');
-});
-
+// Start server
 app.listen(config.port, () => {
-  console.log(`Server running on port ${config.port}`);
+  console.log(`Server is running on port ${config.port}`);
 });
