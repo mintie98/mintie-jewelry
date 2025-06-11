@@ -1,22 +1,22 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "app.js",
+  "description": "",
+  "main": "src/interfaces/app.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js"
+    "start": "node src/interfaces/app.js",
+    "dev": "nodemon src/interfaces/app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "cors": "^2.8.5",
-    "dotenv": "^16.5.0",
-    "express": "^5.1.0",
-    "mysql2": "^3.14.1"
+    "express": "^4.18.2",
+    "mysql2": "^3.6.5"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0"
+    "nodemon": "^3.0.2"
   }
 }

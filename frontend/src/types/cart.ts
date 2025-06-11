@@ -1,8 +1,7 @@
-import { Product, ProductVariant } from './product';
+import { Product } from './product';
 
 export interface CartItem {
   product: Product;
-  variant: ProductVariant;
   size: string;
   quantity: number;
 }

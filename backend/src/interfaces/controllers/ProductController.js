@@ -4,6 +4,7 @@ const GetRelatedProducts = require('../../application/use-cases/GetRelatedProduc
 
 class ProductController {
   constructor(productRepository) {
+    this.productRepository = productRepository;
     this.getAllProductsUseCase = new GetAllProducts(productRepository);
     this.getProductDetailsUseCase = new GetProductDetails(productRepository);
     this.getRelatedProductsUseCase = new GetRelatedProducts(productRepository);
@@ -11,8 +12,22 @@ class ProductController {
 
   async getAllProducts(req, res) {
     try {
-      const products = await this.getAllProductsUseCase.execute();
-      res.json(products);
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 12;
+      const category = req.query.category ? parseInt(req.query.category) : null;
+      const minPrice = req.query.minPrice;
+      const maxPrice = req.query.maxPrice;
+      const sort = req.query.sort || 'newest';
+      
+      const filters = {
+        category,
+        minPrice,
+        maxPrice,
+        sort
+      };
+      
+      const result = await this.getAllProductsUseCase.execute(page, limit, filters);
+      res.json(result);
     } catch (error) {
       console.error('Error in getAllProducts:', error);
       res.status(500).json({ error: 'Internal server error' });
@@ -21,8 +36,8 @@ class ProductController {
 
   async getProductDetails(req, res) {
     try {
-      const { id } = req.params;
-      const product = await this.getProductDetailsUseCase.execute(id);
+      const { slug } = req.params;
+      const product = await this.productRepository.findBySlug(slug);
       
       if (!product) {
         return res.status(404).json({ error: 'Product not found' });

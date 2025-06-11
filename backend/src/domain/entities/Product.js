@@ -4,6 +4,9 @@ class Product {
     name,
     slug,
     description,
+    sku,
+    price,
+    sale_price,
     category_id,
     category_name,
     category_slug,
@@ -11,12 +14,16 @@ class Product {
     is_active,
     created_at,
     updated_at,
-    variants = []
+    images = [],
+    sizes_quantities = []
   }) {
     this.id = id;
     this.name = name;
     this.slug = slug;
     this.description = description;
+    this.sku = sku;
+    this.price = price;
+    this.sale_price = sale_price;
     this.category_id = category_id;
     this.category_name = category_name;
     this.category_slug = category_slug;
@@ -24,7 +31,8 @@ class Product {
     this.is_active = is_active;
     this.created_at = created_at;
     this.updated_at = updated_at;
-    this.variants = variants;
+    this.images = images;
+    this.sizes_quantities = sizes_quantities;
   }
 
   toJSON() {
@@ -33,25 +41,20 @@ class Product {
       name: this.name,
       slug: this.slug,
       description: this.description,
-      category_id: this.category_id,
-      category_name: this.category_name,
-      category_slug: this.category_slug,
+      sku: this.sku,
+      price: this.price,
+      sale_price: this.sale_price,
+      category: {
+        id: this.category_id,
+        name: this.category_name,
+        slug: this.category_slug
+      },
       is_featured: this.is_featured,
       is_active: this.is_active,
       created_at: this.created_at,
       updated_at: this.updated_at,
-      variants: this.variants.map(variant => ({
-        id: variant.id,
-        product_id: variant.product_id,
-        sku: variant.sku,
-        price: variant.price,
-        sale_price: variant.sale_price,
-        is_active: variant.is_active,
-        created_at: variant.created_at,
-        updated_at: variant.updated_at,
-        images: variant.images || [],
-        sizes_quantities: variant.sizes_quantities || []
-      }))
+      images: this.images,
+      sizes_quantities: this.sizes_quantities
     };
   }
 }

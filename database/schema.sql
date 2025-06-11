@@ -1,18 +1,36 @@
--- Use the Jewelry database (optional, can be done manually before import)
--- USE Jewelry;
+-- Xóa và tạo lại cơ sở dữ liệu Jewelry_DB
+DROP DATABASE IF EXISTS Jewelry_DB;
+CREATE DATABASE Jewelry_DB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE Jewelry_DB;
 
--- Drop tables in reverse order to handle foreign key dependencies
+-- Tắt kiểm tra khóa ngoại để DROP bảng không bị lỗi thứ tự
+SET FOREIGN_KEY_CHECKS=0;
+
+-- Drop các bảng theo thứ tự ngược lại của sự phụ thuộc
+DROP TABLE IF EXISTS stock_movements;
 DROP TABLE IF EXISTS reviews;
 DROP TABLE IF EXISTS cart_items;
 DROP TABLE IF EXISTS cart;
+DROP TABLE IF EXISTS payment_transactions;
 DROP TABLE IF EXISTS order_items;
 DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS shipping_methods;
 DROP TABLE IF EXISTS collection_products;
 DROP TABLE IF EXISTS collections;
+DROP TABLE IF EXISTS product_attributes;
+DROP TABLE IF EXISTS attribute_values;
+DROP TABLE IF EXISTS attributes;
 DROP TABLE IF EXISTS product_images;
+DROP TABLE IF EXISTS product_quantities;
+DROP TABLE IF EXISTS product_categories;
 DROP TABLE IF EXISTS products;
 DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS user_addresses;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS pages;
+
+-- Bật lại kiểm tra khóa ngoại
+SET FOREIGN_KEY_CHECKS=1;
 
 -- Tạo bảng Users
 CREATE TABLE users (
@@ -22,10 +40,28 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL,
     full_name VARCHAR(100),
     phone VARCHAR(20),
-    address TEXT,
-    role VARCHAR(20) DEFAULT 'customer', -- customer, admin
+    role VARCHAR(20) DEFAULT 'customer' COMMENT 'customer, admin',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tạo bảng User_Addresses
+CREATE TABLE user_addresses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    full_name VARCHAR(100) NOT NULL COMMENT 'Tên người nhận tại địa chỉ này',
+    phone VARCHAR(20) NOT NULL COMMENT 'SĐT người nhận tại địa chỉ này',
+    address_line1 VARCHAR(255) NOT NULL COMMENT 'Địa chỉ chi tiết (số nhà, đường)',
+    address_line2 VARCHAR(255) COMMENT 'Địa chỉ chi tiết thêm (tòa nhà, tầng)',
+    ward_name VARCHAR(100) NOT NULL COMMENT 'Phường/Xã',
+    district_name VARCHAR(100) NOT NULL COMMENT 'Quận/Huyện',
+    province_name VARCHAR(100) NOT NULL COMMENT 'Tỉnh/Thành phố',
+    country_code VARCHAR(10) DEFAULT 'VN' COMMENT 'Mã Quốc gia',
+    is_default_shipping BOOLEAN DEFAULT FALSE,
+    is_default_billing BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tạo bảng Categories
@@ -34,33 +70,122 @@ CREATE TABLE categories (
     name VARCHAR(255) NOT NULL,
     slug VARCHAR(255) NOT NULL UNIQUE,
     description TEXT,
+    image_url VARCHAR(255),
+    parent_id INT DEFAULT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    display_order INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (parent_id) REFERENCES categories(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tạo bảng Attributes
+CREATE TABLE attributes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE COMMENT 'Tên thuộc tính (dùng nội bộ, vd: gender, metal_material)',
+    display_name VARCHAR(255) NOT NULL COMMENT 'Tên hiển thị (vd: Giới tính, Chất liệu kim loại)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tạo bảng Products
+-- Tạo bảng Attribute_Values
+CREATE TABLE attribute_values (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    attribute_id INT NOT NULL,
+    value VARCHAR(255) NOT NULL COMMENT 'Giá trị của thuộc tính (vd: Nam, Vàng, 18K)',
+    display_order INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (attribute_id) REFERENCES attributes(id) ON DELETE CASCADE,
+    UNIQUE (attribute_id, value)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tạo bảng Shipping_Methods
+CREATE TABLE shipping_methods (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    base_cost DECIMAL(10,2) DEFAULT 0.00,
+    is_active BOOLEAN DEFAULT TRUE,
+    tracking_url_template VARCHAR(255) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tạo bảng Pages
+CREATE TABLE pages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) NOT NULL UNIQUE,
+    content TEXT NOT NULL,
+    meta_title VARCHAR(255),
+    meta_description TEXT,
+    meta_keywords VARCHAR(255),
+    is_published BOOLEAN DEFAULT FALSE,
+    published_at TIMESTAMP NULL,
+    user_id INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tạo bảng Products (ĐÃ CẬP NHẬT: Thêm sku, price, sale_price. Mỗi dòng là một sản phẩm bán được)
 CREATE TABLE products (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL COMMENT 'Tên của sản phẩm cụ thể, vd: Nhẫn Kim Cương 0.5ct nước E',
     slug VARCHAR(255) NOT NULL UNIQUE,
+    sku VARCHAR(50) UNIQUE NOT NULL COMMENT 'Mã duy nhất cho từng sản phẩm bán được',
+    price DECIMAL(15,2) NOT NULL COMMENT 'Giá gốc',
+    sale_price DECIMAL(15,2) COMMENT 'Giá khuyến mãi',
     description TEXT,
-    category_id INT,
+    category_id INT COMMENT 'Danh mục chính để hiển thị',
     is_featured BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (category_id) REFERENCES categories(id)
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tạo bảng Product_Images
+-- Tạo bảng Product_Categories
+CREATE TABLE product_categories (
+    product_id INT NOT NULL,
+    category_id INT NOT NULL,
+    PRIMARY KEY (product_id, category_id),
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tạo bảng Product_Attributes (CẬP NHẬT: Tham chiếu đến product_id)
+CREATE TABLE product_attributes (
+    product_id INT NOT NULL,
+    attribute_value_id INT NOT NULL,
+    PRIMARY KEY (product_id, attribute_value_id),
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (attribute_value_id) REFERENCES attribute_values(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tạo bảng Product_Quantities (CẬP NHẬT: Tham chiếu đến product_id)
+CREATE TABLE product_quantities (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    size VARCHAR(50) NOT NULL COMMENT 'Kích thước (vd: 7, 8, S, M, 42cm)',
+    quantity INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE (product_id, size),
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tạo bảng Product_Images (CẬP NHẬT: Tham chiếu đến product_id)
 CREATE TABLE product_images (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    variant_id INT,
+    product_id INT NOT NULL,
     image_url VARCHAR(255) NOT NULL,
     is_primary BOOLEAN DEFAULT FALSE,
     display_order INT DEFAULT 0,
+    alt_text VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (variant_id) REFERENCES product_variants(id)
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tạo bảng Collections
@@ -90,50 +215,85 @@ CREATE TABLE orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     order_number VARCHAR(50) UNIQUE NOT NULL,
-    total_amount DECIMAL(12,2) NOT NULL,
-    shipping_address TEXT NOT NULL,
+    shipping_full_name VARCHAR(100) NOT NULL,
     shipping_phone VARCHAR(20) NOT NULL,
-    shipping_name VARCHAR(100) NOT NULL,
-    status VARCHAR(20) DEFAULT 'pending', -- pending, processing, shipped, delivered, cancelled
-    payment_status VARCHAR(20) DEFAULT 'pending', -- pending, paid, failed
+    shipping_address_line1 VARCHAR(255) NOT NULL,
+    shipping_address_line2 VARCHAR(255),
+    shipping_ward_name VARCHAR(100) NOT NULL,
+    shipping_district_name VARCHAR(100) NOT NULL,
+    shipping_province_name VARCHAR(100) NOT NULL,
+    shipping_country_code VARCHAR(10) DEFAULT 'VN',
+    shipping_method_id INT NULL,
+    shipping_cost DECIMAL(10,2) DEFAULT 0.00,
+    tracking_number VARCHAR(100) NULL,
+    sub_total_amount DECIMAL(15,2) NOT NULL,
+    discount_amount DECIMAL(15,2) DEFAULT 0.00,
+    total_amount DECIMAL(15,2) NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending',
+    payment_status VARCHAR(50) DEFAULT 'pending',
     payment_method VARCHAR(50),
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
+    FOREIGN KEY (shipping_method_id) REFERENCES shipping_methods(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tạo bảng Order_Items
+-- Tạo bảng Order_Items (CẬP NHẬT: Tham chiếu đến product_id)
 CREATE TABLE order_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
     order_id INT NOT NULL,
     product_id INT NOT NULL,
+    size VARCHAR(50) NOT NULL COMMENT 'Kích thước đã chọn',
+    product_name VARCHAR(255) NOT NULL,
+    product_sku VARCHAR(50) NOT NULL,
     quantity INT NOT NULL,
-    unit_price DECIMAL(12,2) NOT NULL,
+    unit_price DECIMAL(15,2) NOT NULL,
+    sale_price DECIMAL(15,2) NOT NULL,
+    total_price DECIMAL(15,2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tạo bảng Cart
-CREATE TABLE cart (
+-- Tạo bảng Payment_Transactions
+CREATE TABLE payment_transactions (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
+    order_id INT NOT NULL,
+    transaction_code VARCHAR(255) NOT NULL,
+    payment_gateway VARCHAR(50) NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    currency_code VARCHAR(10) DEFAULT 'VND',
+    status VARCHAR(50) NOT NULL,
+    payment_time TIMESTAMP NULL,
+    gateway_response TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    UNIQUE (transaction_code, payment_gateway)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tạo bảng Cart
+CREATE TABLE cart (
+    id VARCHAR(255) PRIMARY KEY,
+    user_id INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NULL,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Tạo bảng Cart_Items
+-- Tạo bảng Cart_Items (CẬP NHẬT: Tham chiếu đến product_id)
 CREATE TABLE cart_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    cart_id INT NOT NULL,
+    cart_id VARCHAR(255) NOT NULL,
     product_id INT NOT NULL,
+    size VARCHAR(50) NOT NULL,
     quantity INT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (cart_id) REFERENCES cart(id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    UNIQUE (cart_id, product_id, size)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tạo bảng Reviews
@@ -141,149 +301,61 @@ CREATE TABLE reviews (
     id INT AUTO_INCREMENT PRIMARY KEY,
     product_id INT NOT NULL,
     user_id INT NOT NULL,
-    rating INT CHECK (rating >= 1 AND rating <= 5),
+    rating INT NOT NULL,
+    title VARCHAR(255),
     comment TEXT,
-    is_approved BOOLEAN DEFAULT false,
+    is_approved BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT chk_rating CHECK (rating >= 1 AND rating <= 5) -- Dùng cho MySQL >= 8.0.16
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
----
-### Indexes for Query Performance
----
-CREATE INDEX idx_products_category ON products(category_id);
+-- Tạo bảng Stock_Movements (CẬP NHẬT: Tham chiếu đến product_id)
+CREATE TABLE stock_movements (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    size VARCHAR(50) NOT NULL,
+    change_in_quantity INT NOT NULL,
+    new_quantity INT NOT NULL,
+    movement_type VARCHAR(100) NOT NULL,
+    reason TEXT,
+    order_item_id INT NULL,
+    user_id INT NULL,
+    reference_document VARCHAR(255),
+    moved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (order_item_id) REFERENCES order_items(id) ON DELETE SET NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- ### Indexes for Query Performance ###
+CREATE INDEX idx_products_category_id ON products(category_id);
 CREATE INDEX idx_products_slug ON products(slug);
-CREATE INDEX idx_products_is_featured ON products(is_featured);
+CREATE INDEX idx_products_sku ON products(sku);
 CREATE INDEX idx_products_is_active ON products(is_active);
-
-CREATE INDEX idx_product_images_product ON product_images(variant_id);
-CREATE INDEX idx_product_images_is_primary ON product_images(is_primary);
-
-CREATE INDEX idx_collection_products_collection ON collection_products(collection_id);
-CREATE INDEX idx_collection_products_product ON collection_products(product_id);
-
-CREATE INDEX idx_orders_user ON orders(user_id);
+CREATE INDEX idx_product_categories_category_id ON product_categories(category_id);
+CREATE INDEX idx_product_attributes_attribute_value_id ON product_attributes(attribute_value_id);
+CREATE INDEX idx_product_quantities_product_id_size ON product_quantities(product_id, size);
+CREATE INDEX idx_product_images_product_id ON product_images(product_id);
+CREATE INDEX idx_collection_products_product_id ON collection_products(product_id);
+CREATE INDEX idx_orders_user_id ON orders(user_id);
 CREATE INDEX idx_orders_status ON orders(status);
-CREATE INDEX idx_orders_payment_status ON orders(payment_status);
-
-CREATE INDEX idx_order_items_order ON order_items(order_id);
-CREATE INDEX idx_order_items_product ON order_items(product_id);
-
-CREATE INDEX idx_cart_items_cart ON cart_items(cart_id);
-CREATE INDEX idx_cart_items_product ON cart_items(product_id);
-
-CREATE INDEX idx_reviews_product ON reviews(product_id);
-CREATE INDEX idx_reviews_user ON reviews(user_id);
-CREATE INDEX idx_reviews_rating ON reviews(rating);
-
----
-### Triggers for `updated_at` (Optional, as `ON UPDATE CURRENT_TIMESTAMP` handles this)
----
--- The previous errors were due to PostgreSQL function syntax.
--- MySQL handles this directly within the trigger.
--- However, for the `updated_at` column, you've already defined `ON UPDATE CURRENT_TIMESTAMP`
--- in your table schemas, which means these triggers are redundant.
--- If you still want to explicitly use triggers for this, here is the correct syntax:
-
-DELIMITER $$
-
--- Trigger for users table
-CREATE TRIGGER update_users_updated_at
-BEFORE UPDATE ON users
-FOR EACH ROW
-BEGIN
-    SET NEW.updated_at = CURRENT_TIMESTAMP;
-END$$
-
--- Trigger for categories table
-CREATE TRIGGER update_categories_updated_at
-BEFORE UPDATE ON categories
-FOR EACH ROW
-BEGIN
-    SET NEW.updated_at = CURRENT_TIMESTAMP;
-END$$
-
--- Trigger for products table
-CREATE TRIGGER update_products_updated_at
-BEFORE UPDATE ON products
-FOR EACH ROW
-BEGIN
-    SET NEW.updated_at = CURRENT_TIMESTAMP;
-END$$
-
--- Trigger for collections table
-CREATE TRIGGER update_collections_updated_at
-BEFORE UPDATE ON collections
-FOR EACH ROW
-BEGIN
-    SET NEW.updated_at = CURRENT_TIMESTAMP;
-END$$
-
--- Trigger for orders table
-CREATE TRIGGER update_orders_updated_at
-BEFORE UPDATE ON orders
-FOR EACH ROW
-BEGIN
-    SET NEW.updated_at = CURRENT_TIMESTAMP;
-END$$
-
--- Trigger for cart table
-CREATE TRIGGER update_cart_updated_at
-BEFORE UPDATE ON cart
-FOR EACH ROW
-BEGIN
-    SET NEW.updated_at = CURRENT_TIMESTAMP;
-END$$
-
--- Trigger for cart_items table
-BEFORE UPDATE ON cart_items
-FOR EACH ROW
-BEGIN
-    SET NEW.updated_at = CURRENT_TIMESTAMP;
-END$$
-
--- Trigger for reviews table
-CREATE TRIGGER update_reviews_updated_at
-BEFORE UPDATE ON reviews
-FOR EACH ROW
-BEGIN
-    SET NEW.updated_at = CURRENT_TIMESTAMP;
-END$$
-
-DELIMITER ;
-
--- Thêm dữ liệu mẫu cho bảng categories
-INSERT INTO categories (name, slug, description) VALUES
-('Nhẫn', 'rings', 'Các loại nhẫn'),
-('Dây chuyền', 'necklaces', 'Các loại dây chuyền'),
-('Bông tai', 'earrings', 'Các loại bông tai'),
-('Lắc tay', 'bracelets', 'Các loại lắc tay');
-
--- Thêm dữ liệu mẫu cho bảng products
-INSERT INTO products (name, slug, description, category_id, is_featured, is_active) VALUES
-('Diamond Ring', 'diamond-ring', 'Elegant diamond ring with natural diamond', 1, 0, 1),
-('Gold Necklace', 'gold-necklace', 'Beautiful pure gold necklace', 2, 0, 1),
-('Pearl Earrings', 'pearl-earrings', 'Classic pearl earrings', 3, 0, 1),
-('Gold Bracelet', 'gold-bracelet', 'Stylish gold bracelet with gemstone accents', 4, 0, 1),
-('Wedding Ring', 'wedding-ring', 'Romantic diamond wedding ring set', 1, 0, 1),
-('Pearl Necklace', 'pearl-necklace', 'Luxurious natural pearl necklace', 2, 0, 1);
-
--- Thêm dữ liệu mẫu cho bảng product_variants
-INSERT INTO product_variants (product_id, sku, price, sale_price, stock, is_active) VALUES
-(1, 'SKU1', 15000000.00, NULL, 0, 1),
-(2, 'SKU2', 8500000.00, NULL, 0, 1),
-(3, 'SKU3', 3200000.00, NULL, 0, 1),
-(4, 'SKU4', 12000000.00, NULL, 0, 1),
-(5, 'SKU5', 25000000.00, NULL, 0, 1),
-(6, 'SKU6', 5500000.00, NULL, 0, 1);
-
--- Thêm dữ liệu mẫu cho bảng product_images
-INSERT INTO product_images (variant_id, image_url, is_primary, display_order) VALUES
-(1, '/uploads/diamond-ring.jpg', 1, 1),
-(2, '/uploads/gold-necklace.jpg', 1, 1),
-(3, '/uploads/pearl-earrings.jpg', 1, 1),
-(4, '/uploads/gold-bracelet.jpg', 1, 1),
-(5, '/uploads/wedding-ring.jpg', 1, 1),
-(6, '/uploads/pearl-necklace.jpg', 1, 1);
+CREATE INDEX idx_orders_shipping_method_id ON orders(shipping_method_id);
+CREATE INDEX idx_order_items_order_id ON order_items(order_id);
+CREATE INDEX idx_order_items_product_id_size ON order_items(product_id, size);
+CREATE INDEX idx_payment_transactions_order_id ON payment_transactions(order_id);
+CREATE INDEX idx_cart_items_cart_id ON cart_items(cart_id);
+CREATE INDEX idx_cart_items_product_id_size ON cart_items(product_id, size);
+CREATE INDEX idx_reviews_product_id ON reviews(product_id);
+CREATE INDEX idx_reviews_user_id ON reviews(user_id);
+CREATE INDEX idx_stock_movements_product_id_size ON stock_movements(product_id, size);
+CREATE INDEX idx_stock_movements_movement_type ON stock_movements(movement_type);
+CREATE INDEX idx_user_addresses_user_id ON user_addresses(user_id);
+CREATE INDEX idx_pages_slug ON pages(slug);
+CREATE INDEX idx_categories_slug ON categories(slug);
+CREATE INDEX idx_categories_parent_id ON categories(parent_id);
+CREATE INDEX idx_attribute_values_attribute_id ON attribute_values(attribute_id);
+CREATE INDEX idx_attributes_name ON attributes(name);

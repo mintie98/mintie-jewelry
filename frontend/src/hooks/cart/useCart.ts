@@ -1,73 +1,73 @@
 import { useState, useEffect } from 'react';
 import { Cart, CartItem } from '../../types/cart';
 
-const CART_STORAGE_KEY = 'cart';
-
 export const useCart = () => {
-  const [cart, setCart] = useState<Cart>(() => {
-    const savedCart = localStorage.getItem(CART_STORAGE_KEY);
-    return savedCart ? JSON.parse(savedCart) : { items: [], total: 0 };
-  });
+  const [cart, setCart] = useState<Cart>({ items: [], total: 0 });
 
   useEffect(() => {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+    const savedCart = localStorage.getItem('cart');
+    if (savedCart) {
+      setCart(JSON.parse(savedCart));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('cart', JSON.stringify(cart));
   }, [cart]);
 
+  const calculateTotal = (items: CartItem[]): number => {
+    return items.reduce((total, item) => {
+      const price = item.product.sale_price || item.product.price;
+      return total + price * item.quantity;
+    }, 0);
+  };
+
   const addToCart = (item: CartItem) => {
-    setCart((prevCart) => {
+    setCart(prevCart => {
       const existingItemIndex = prevCart.items.findIndex(
-        (i) => 
-          i.product.id === item.product.id && 
-          i.variant.id === item.variant.id && 
-          i.size === item.size
+        cartItem => 
+          cartItem.product.id === item.product.id && 
+          cartItem.size === item.size
       );
 
+      let newItems;
       if (existingItemIndex > -1) {
-        const newItems = [...prevCart.items];
+        newItems = [...prevCart.items];
         newItems[existingItemIndex].quantity += item.quantity;
-        return {
-          items: newItems,
-          total: calculateTotal(newItems),
-        };
+      } else {
+        newItems = [...prevCart.items, item];
       }
 
       return {
-        items: [...prevCart.items, item],
-        total: calculateTotal([...prevCart.items, item]),
+        items: newItems,
+        total: calculateTotal(newItems)
       };
     });
   };
 
-  const removeFromCart = (item: CartItem) => {
-    setCart((prevCart) => {
+  const removeFromCart = (productId: number, size: string) => {
+    setCart(prevCart => {
       const newItems = prevCart.items.filter(
-        (i) => 
-          i.product.id !== item.product.id || 
-          i.variant.id !== item.variant.id || 
-          i.size !== item.size
+        item => !(item.product.id === productId && item.size === size)
       );
       return {
         items: newItems,
-        total: calculateTotal(newItems),
+        total: calculateTotal(newItems)
       };
     });
   };
 
-  const updateQuantity = (item: CartItem, quantity: number) => {
-    setCart((prevCart) => {
-      const newItems = prevCart.items.map((i) => {
-        if (
-          i.product.id === item.product.id && 
-          i.variant.id === item.variant.id && 
-          i.size === item.size
-        ) {
-          return { ...i, quantity };
+  const updateQuantity = (productId: number, size: string, quantity: number) => {
+    setCart(prevCart => {
+      const newItems = prevCart.items.map(item => {
+        if (item.product.id === productId && item.size === size) {
+          return { ...item, quantity };
         }
-        return i;
+        return item;
       });
       return {
         items: newItems,
-        total: calculateTotal(newItems),
+        total: calculateTotal(newItems)
       };
     });
   };
@@ -76,18 +76,12 @@ export const useCart = () => {
     setCart({ items: [], total: 0 });
   };
 
-  const calculateTotal = (items: CartItem[]): number => {
-    return items.reduce((total, item) => {
-      const price = item.variant.sale_price || item.variant.price;
-      return total + price * item.quantity;
-    }, 0);
-  };
-
   return {
-    cart,
+    items: cart.items,
+    total: cart.total,
     addToCart,
     removeFromCart,
     updateQuantity,
-    clearCart,
+    clearCart
   };
 }; 

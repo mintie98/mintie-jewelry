@@ -1,25 +1,14 @@
 export interface ProductImage {
   id: number;
-  variant_id: number;
   image_url: string;
   is_primary: boolean;
   display_order: number;
 }
 
-export interface ProductQuantity {
+export interface ProductSize {
   size: string;
   quantity: number;
-}
-
-export interface ProductVariant {
-  id: number;
-  product_id: number;
-  sku: string;
   price: number;
-  sale_price: number | null;
-  is_active: boolean;
-  images: ProductImage[];
-  quantities: ProductQuantity[];
 }
 
 export interface Product {
@@ -27,10 +16,31 @@ export interface Product {
   name: string;
   slug: string;
   description: string;
-  category_id: number;
-  category_name: string;
-  category_slug: string;
+  sku: string;
+  price: number;
+  sale_price: number | null;
+  category: {
+    id: number;
+    name: string;
+    slug: string;
+  };
   is_featured: boolean;
   is_active: boolean;
-  variants: ProductVariant[];
+  created_at: string;
+  updated_at: string;
+  images: ProductImage[];
+  sizes_quantities: ProductSize[];
+}
+
+export interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  image_url: string | null;
+  parent_id: number | null;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 } 
