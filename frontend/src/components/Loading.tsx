@@ -1,26 +1,27 @@
 import React from 'react';
+import './Loading.css';
 
 interface LoadingProps {
   size?: 'small' | 'medium' | 'large';
-  fullScreen?: boolean;
 }
 
-const Loading: React.FC<LoadingProps> = ({ size = 'medium', fullScreen = false }) => {
+const Loading: React.FC<LoadingProps> = ({ size = 'medium' }) => {
   const sizeClasses = {
-    small: 'h-6 w-6',
-    medium: 'h-12 w-12',
-    large: 'h-16 w-16'
+    small: 'w-8',
+    medium: 'w-12',
+    large: 'w-16'
   };
 
-  const containerClasses = fullScreen
-    ? 'fixed inset-0 flex items-center justify-center bg-white bg-opacity-75 z-50'
-    : 'flex items-center justify-center p-4';
-
   return (
-    <div className={containerClasses}>
-      <div className={`${sizeClasses[size]} relative`}>
-        <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
-        <div className="absolute inset-0 rounded-full border-4 border-t-indigo-600 animate-spin"></div>
+    <div className="fixed inset-0 bg-white bg-opacity-90 flex justify-center items-center z-50">
+      <div className="flex flex-col items-center">
+        <div 
+          className={`${sizeClasses[size]} loader`}
+          style={{
+            '--b': '8px'
+          } as React.CSSProperties}
+        />
+        <p className="mt-4 text-lg font-medium text-gray-600 animate-pulse">Đang tải...</p>
       </div>
     </div>
   );

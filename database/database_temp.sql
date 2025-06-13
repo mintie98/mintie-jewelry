@@ -78,8 +78,8 @@ INSERT INTO `pages` (`id`, `title`, `slug`, `content`, `is_published`, `user_id`
 (2, 'Chính Sách Bảo Hành', 'chinh-sach-bao-hanh', '<p>Chi tiết chính sách bảo hành sản phẩm...</p>', TRUE, 1);
 
 INSERT INTO `collections` (`id`, `name`, `slug`, `description`, `image_url`) VALUES
-(1, 'Tình Yêu Vĩnh Cửu', 'tinh-yeu-vinh-cuu', 'Bộ sưu tập nhẫn đính hôn và nhẫn cưới kim cương.', '/uploads/collections/1/banner.jpg'),
-(2, 'Sắc Màu Rực Rỡ', 'sac-mau-ruc-ro', 'Trang sức đá màu mang lại may mắn và phong cách.', '/uploads/collections/2/banner.jpg');
+(1, 'Tình Yêu Vĩnh Cửu', 'tinh-yeu-vinh-cuu', 'Bộ sưu tập nhẫn đính hôn và nhẫn cưới kim cương.', '/uploads/collections/1/forever-love.jpg'),
+(2, 'Sắc Màu Rực Rỡ', 'sac-mau-ruc-ro', 'Trang sức đá màu mang lại may mắn và phong cách.', '/uploads/collections/2/valina-holiday.jpg');
 
 -- ===================================================================================
 -- 8. Products (CẬP NHẬT: 13 sản phẩm riêng biệt)
@@ -113,20 +113,78 @@ INSERT INTO `product_categories` (`product_id`, `category_id`) VALUES
 (5, 101); -- Nhẫn Cầu Hôn KC Princess (ID 5) cũng thuộc Nhẫn Kim Cương
 
 -- 10. Product Attributes (Gán thuộc tính cho từng product_id)
-INSERT INTO `product_attributes` (`product_id`, `attribute_value_id`) VALUES
--- Sản phẩm 1 (DRDDVT18001)
-(1, 3), (1, 7), (1, 9), (1, 16), (1, 20), (1, 22), (1, 25), (1, 29), (1, 32), (1, 34),
--- Sản phẩm 3 (WRNAVT14004)
-(3, 2), (3, 7), (3, 14), (3, 17);
--- (Thêm thuộc tính cho các sản phẩm khác)
+INSERT INTO `product_attributes` (`product_id`, `attribute_id`, `attribute_value_id`) VALUES
+-- Product 1 (DRDDVT18001)
+(1, 1, 3),   (1, 2, 7),   (1, 3, 9),   (1, 4, 16),  (1, 5, 18),  (1, 6, 20),
+(1, 7, 22),  (1, 8, 25),  (1, 9, 29),  (1, 10, 32), (1, 11, 34),
+-- Product 2 (DRDDVT18002)
+(2, 1, 3),   (2, 2, 7),   (2, 3, 9),   (2, 4, 16),  (2, 5, 19),  (2, 6, 21),
+(2, 7, 23),  (2, 8, 27),  (2, 9, 30),  (2, 10, 33), (2, 11, 35),
+-- Product 3 (DRDDVV14003)
+(3, 1, 2),   (3, 2, 6),   (3, 3, 9),   (3, 4, 16),  (3, 8, 24),
+-- Product 4 (WRNAVT14004)
+(4, 1, 2),   (4, 2, 7),   (4, 3, 14),  (4, 4, 17),
+-- Product 5 (WRDDVH18005)
+(5, 1, 3),   (5, 2, 8),   (5, 3, 9),   (5, 4, 17),
+-- Product 6 (ERDDVT18006)
+(6, 1, 3),   (6, 2, 7),   (6, 3, 9),   (6, 4, 16),  (6, 8, 26),
+-- Product 7 (ERMOVV14007)
+(7, 1, 2),   (7, 2, 6),   (7, 3, 13),  (7, 4, 16),  (7, 8, 28),
+-- Product 8 (EEDDVT14008)
+(8, 1, 2),   (8, 2, 7),   (8, 3, 9),   (8, 4, 16),  (8, 8, 25),
+-- Product 9 (EETPVV18009)
+(9, 1, 3),   (9, 2, 6),   (9, 3, 11),  (9, 4, 16),
+-- Product 10 (NNDDVT18010)
+(10, 1, 3),  (10, 2, 7),  (10, 3, 9),  (10, 4, 16),
+-- Product 11 (NNNAVV14011)
+(11, 1, 2),  (11, 2, 6),  (11, 3, 14), (11, 4, 15),
+-- Product 12 (BBDDVT14012)
+(12, 1, 2),  (12, 2, 7),  (12, 3, 9),  (12, 4, 16),
+-- Product 13 (BBNAVV18013)
+(13, 1, 3),  (13, 2, 6),  (13, 3, 14), (13, 4, 16);
 
 -- 11. Product Quantities (Tồn kho theo product_id và Size)
 INSERT INTO `product_quantities` (`product_id`, `size`, `quantity`) VALUES
-(1, '6', 5), (1, '7', 8), (1, '8', 3),   -- Nhẫn KC Solitaire 0.5ct
-(2, '6.5', 2), (2, '7.5', 4),            -- Nhẫn KC Solitaire 0.75ct
-(3, 'Nam 10 / Nữ 7', 5), (3, 'Nam 11 / Nữ 8', 3), -- Cặp Nhẫn Cưới
-(7, 'Tiêu chuẩn', 20),                    -- Bông tai
-(10, '50cm', 12), (10, '55cm', 7);         -- Dây chuyền nam
+
+-- Product ID 1: Nhẫn Kim Cương Solitaire (Nữ)
+(1, '9', 5), (1, '11', 8), (1, '13', 3), (1, '15', 6),
+
+-- Product ID 2: Nhẫn Kim Cương Solitaire (Nữ)
+(2, '10', 5), (2, '12', 8), (2, '14', 3), (2, '16', 8),
+
+-- Product ID 3: Nhẫn Kim Cương Halo (Nữ)
+(3, '8', 7), (3, '10', 4), (3, '12', 3), (3, '14', 4),
+
+-- Product ID 4: Cặp Nhẫn Cưới Trơn (Cặp Nam/Nữ)
+(4, 'Nam 18 / Nữ 12', 10), (4, 'Nam 19 / Nữ 13', 8), (4, 'Nam 20 / Nữ 14', 5),
+
+-- Product ID 5: Cặp Nhẫn Cưới Hiện Đại (Cặp Nam/Nữ)
+(5, 'Nam 18 / Nữ 12', 7), (5, 'Nam 19 / Nữ 13', 12), (5, 'Nam 20 / Nữ 14', 6),
+
+-- Product ID 6: Nhẫn Cầu Hôn Princess (Nữ)
+(6, '10', 4), (6, '12', 9), (6, '14', 5),
+
+-- Product ID 7: Nhẫn Cầu Hôn Moissanite (Nữ)
+(7, '9', 15), (7, '11', 12), (7, '13', 10), (7, '15', 8),
+
+-- Product ID 8: Bông Tai Kim Cương Nụ (Không phân size)
+(8, 'Tiêu chuẩn', 20),
+
+-- Product ID 9: Bông Tai Dáng Dài Topaz (Không phân size)
+(9, 'Tiêu chuẩn', 15),
+
+-- Product ID 10: Dây Chuyền Mặt Kim Cương Trái Tim (Nữ)
+(10, '42cm', 12), (10, '45cm', 18), (10, '48cm', 7),
+
+-- Product ID 11: Dây Chuyền Dây Mì Ý (Nam)
+(11, '50cm', 15), (11, '55cm', 10), (11, '60cm', 5),
+
+-- Product ID 12: Vòng Tay Tennis Kim Cương (Unisex/Nữ)
+(12, '17cm', 8), (12, '18cm', 10),
+
+-- Product ID 13: Lắc Tay Charm Bi (Nữ)
+(13, '17cm', 25), (13, '18cm', 15);
+
 
 -- 12. Product Images (Ảnh cho từng product_id)
 INSERT INTO `product_images` (`product_id`, `image_url`, `is_primary`, `display_order`, `alt_text`) VALUES

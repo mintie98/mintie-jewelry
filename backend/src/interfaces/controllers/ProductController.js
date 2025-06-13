@@ -15,17 +15,34 @@ class ProductController {
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 12;
       const category = req.query.category ? parseInt(req.query.category) : null;
-      const minPrice = req.query.minPrice;
-      const maxPrice = req.query.maxPrice;
       const sort = req.query.sort || 'newest';
-      
+
+      // Price filters
+      const minPrice = req.query.minPrice ? parseInt(req.query.minPrice) : 2000000;
+      const maxPrice = req.query.maxPrice ? parseInt(req.query.maxPrice) : 200000000;
+
+      // Attribute filters
+      const attributes = {};
+      Object.keys(req.query).forEach(key => {
+        if (key.startsWith('attributes[') && key.endsWith(']')) {
+          const attributeId = key.match(/\[(.*?)\]/)[1];
+          const valueIds = req.query[key].split(',').map(id => parseInt(id));
+          if (valueIds.length > 0) {
+            attributes[attributeId] = valueIds;
+          }
+        }
+      });
+
       const filters = {
         category,
         minPrice,
         maxPrice,
-        sort
+        sort,
+        attributes
       };
-      
+
+      console.log('Filters:', filters); // Debug log
+
       const result = await this.getAllProductsUseCase.execute(page, limit, filters);
       res.json(result);
     } catch (error) {
@@ -52,8 +69,14 @@ class ProductController {
 
   async getRelatedProducts(req, res) {
     try {
-      const { id } = req.params;
-      const relatedProducts = await this.getRelatedProductsUseCase.execute(id);
+      const { slug } = req.params;
+      const product = await this.productRepository.findBySlug(slug);
+      
+      if (!product) {
+        return res.status(404).json({ error: 'Product not found' });
+      }
+      
+      const relatedProducts = await this.getRelatedProductsUseCase.execute(product.id);
       res.json(relatedProducts);
     } catch (error) {
       console.error('Error in getRelatedProducts:', error);

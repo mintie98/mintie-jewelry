@@ -35,17 +35,17 @@ const Header: React.FC = () => {
 
             {/* Navigation */}
             <nav className="hidden md:flex space-x-8">
-              <Link to="/products" className="text-gray-700 hover:text-gold-500">
-                Sản phẩm
-              </Link>
               <Link to="/collections" className="text-gray-700 hover:text-gold-500">
-                Bộ sưu tập
+                Bộ Sưu Tập
               </Link>
               <Link to="/about" className="text-gray-700 hover:text-gold-500">
-                Giới thiệu
+                Giới Thiệu
+              </Link>
+              <Link to="" className="text-gray-700 hover:text-gold-500">
+                Tin Tức
               </Link>
               <Link to="/contact" className="text-gray-700 hover:text-gold-500">
-                Liên hệ
+                Liên Hệ
               </Link>
             </nav>
 

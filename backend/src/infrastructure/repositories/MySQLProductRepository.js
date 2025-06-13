@@ -18,9 +18,29 @@ class MySQLProductRepository extends ProductRepository {
       queryParams.push(filters.category);
     }
 
+    // Price filter
     if (filters.minPrice || filters.maxPrice) {
-      whereClause += ' AND CAST(p.price AS DECIMAL(15,2)) >= ? AND CAST(p.price AS DECIMAL(15,2)) <= ?';
-      queryParams.push(filters.minPrice || 2000000, filters.maxPrice || 200000000);
+      whereClause += ' AND CAST(COALESCE(p.price, 0) AS DECIMAL(15,2)) BETWEEN ? AND ?';
+      queryParams.push(
+        filters.minPrice || 2000000,
+        filters.maxPrice || 200000000
+      );
+    }
+
+    // Add attribute filters
+    if (filters.attributes && Object.keys(filters.attributes).length > 0) {
+      Object.entries(filters.attributes).forEach(([attributeId, valueIds]) => {
+        if (valueIds && valueIds.length > 0) {
+          whereClause += ` AND EXISTS (
+            SELECT 1 FROM product_attributes pa
+            JOIN attribute_values av ON pa.attribute_value_id = av.id
+            WHERE pa.product_id = p.id
+            AND av.attribute_id = ?
+            AND av.id IN (?)
+          )`;
+          queryParams.push(parseInt(attributeId), valueIds.map(id => parseInt(id)));
+        }
+      });
     }
 
     // Determine sort order
@@ -39,13 +59,13 @@ class MySQLProductRepository extends ProductRepository {
     }
 
     const countQuery = `
-      SELECT COUNT(*) as total
+      SELECT COUNT(DISTINCT p.id) as total
       FROM products p
       ${whereClause}
     `;
 
     const productsQuery = `
-      SELECT 
+      SELECT DISTINCT
         p.*,
         c.name as category_name,
         c.slug as category_slug,

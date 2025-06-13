@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Product } from '../types/product';
+import { Product } from '../../types/product';
 
 interface ProductCardProps {
   product: Product;
@@ -48,12 +48,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   };
 
   return (
-    <div className="group relative bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
-      <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-t-lg bg-gray-200">
+    <div className="group relative bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 w-[280px]">
+      <div className="aspect-[3/4] w-full overflow-hidden rounded-t-lg bg-gray-200">
         <img
           src={imageUrl}
           alt={product.name}
-          className="h-full w-full object-cover object-center group-hover:opacity-90 transition-opacity duration-300"
+          className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
           onError={(e) => {
             console.error('Image failed to load:', imageUrl);
             e.currentTarget.src = 'https://via.placeholder.com/400x400?text=No+Image';
@@ -61,23 +61,21 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         />
       </div>
       <div className="p-4">
-        <div className="flex justify-between">
+        <div className="flex flex-col items-center text-center">
+          <h3 className="text-sm font-medium text-gray-900 h-[40px] flex items-center justify-center">
+            <Link to={`/products/${product.slug}`}>
+              <span aria-hidden="true" className="absolute inset-0" />
+              {product.name}
+            </Link>
+          </h3>
+          <p className="text-sm text-gray-500 mb-2">{product.category?.name}</p>
           <div>
-            <h3 className="text-sm font-medium text-gray-900">
-              <Link to={`/products/${product.slug}`}>
-                <span aria-hidden="true" className="absolute inset-0" />
-                {product.name}
-              </Link>
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">{product.category?.name}</p>
-          </div>
-          <div className="text-right">
             {hasPriceRange ? (
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-sm font-medium text-yellow-600">
                 {formatPrice(minPrice)}đ - {formatPrice(maxPrice)}đ
               </p>
             ) : (
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-sm font-medium text-yellow-600">
                 {formatPrice(product.price)}đ
               </p>
             )}

@@ -158,11 +158,14 @@ CREATE TABLE product_categories (
 -- Tạo bảng Product_Attributes (CẬP NHẬT: Tham chiếu đến product_id)
 CREATE TABLE product_attributes (
     product_id INT NOT NULL,
-    attribute_value_id INT NOT NULL,
-    PRIMARY KEY (product_id, attribute_value_id),
+    attribute_id INT NOT NULL COMMENT 'Loại thuộc tính (ví dụ: Độ tuổi vàng)',
+    attribute_value_id INT NOT NULL COMMENT 'Giá trị cụ thể của thuộc tính đó',
+    PRIMARY KEY (product_id, attribute_id) COMMENT 'mỗi sản phẩm chỉ có 1 giá trị cho mỗi loại thuộc tính',
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (attribute_id) REFERENCES attributes(id) ON DELETE CASCADE,
     FOREIGN KEY (attribute_value_id) REFERENCES attribute_values(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 -- Tạo bảng Product_Quantities (CẬP NHẬT: Tham chiếu đến product_id)
 CREATE TABLE product_quantities (
